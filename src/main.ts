@@ -23,7 +23,7 @@ function render() {
   }
 
   document.querySelector<HTMLDivElement>("#app")!.innerHTML =
-    `${state.render()}${win}`;
+    `<button onclick="reset()">Reset</button>${state.render()}${win}`;
 }
 
 render();
@@ -44,4 +44,10 @@ globalThis.markBox = function (row: number, column: number) {
     state.rows[row][column] = null;
   }
   render();
+};
+
+globalThis.reset = function () {
+  state.reset();
+  render();
+  console.log("reset");
 };

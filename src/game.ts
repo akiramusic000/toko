@@ -5,14 +5,20 @@ export type Game = {
 };
 
 export class GameState {
+  game: Game;
   columnValues: number[];
   rowValues: number[];
   rows: (number | null | "X" | "box")[][];
 
   constructor(game: Game) {
+    this.game = game;
     this.columnValues = game.columnValues;
     this.rowValues = game.rowValues;
-    this.rows = game.rows;
+    this.rows = JSON.parse(JSON.stringify(game.rows));
+  }
+
+  reset() {
+    this.rows = JSON.parse(JSON.stringify(this.game.rows));
   }
 
   render(): string {
