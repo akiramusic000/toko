@@ -20,11 +20,22 @@ let columns = 5;
 let boxes = 10;
 let hints = 5;
 
-let game: Game = randomGame(rows, columns, boxes, hints)!;
+const urlParams = new URLSearchParams(window.location.search);
+const parameterValue = urlParams.get("code");
 
-let state = new GameState(game);
+let game: Game;
+let state: GameState;
+let code: string;
 
-let code = exportGame(game);
+if (parameterValue == null) {
+  game = randomGame(rows, columns, boxes, hints)!;
+  state = new GameState(game);
+  code = exportGame(game);
+} else {
+  code = parameterValue;
+  game = importGame(code);
+  state = new GameState(game);
+}
 
 function render() {
   let win = "";
@@ -45,6 +56,9 @@ function render() {
     </br>
       <label for="code">Puzzle Code</label>
       <input type="text" name="code" size=50px id="codeIn", value="${code}", onchange="updateState()"></input>
+    <br/>
+      <button onclick="share()">Share Puzzle</button>
+      <span id="share"></span>
     <br/>
       <button onclick="reset()">Reset</button>
       ${state.render()}${win}
@@ -72,6 +86,7 @@ declare global {
   var reset: () => void;
   var generateRandom: () => void;
   var updateState: () => void;
+  var share: () => void;
 }
 
 globalThis.clickBox = function (row: number, column: number) {
@@ -121,4 +136,11 @@ globalThis.updateState = function () {
     document.querySelector<HTMLInputElement>("#hints")!.value,
   );
   code = document.querySelector<HTMLInputElement>("#codeIn")!.value;
+};
+
+globalThis.share = function () {
+  let share = document.querySelector<HTMLParagraphElement>("#share")!;
+  let url = `${window.location.origin + window.location.pathname}?code=${code}`;
+  share.innerText = "URL copied to clipboard";
+  navigator.clipboard.writeText(url);
 };
