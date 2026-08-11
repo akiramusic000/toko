@@ -28,6 +28,12 @@ function render() {
 
 render();
 
+declare global {
+  var clickBox: (row: number, column: number) => void;
+  var markBox: (row: number, column: number) => void;
+  var reset: () => void;
+}
+
 globalThis.clickBox = function (row: number, column: number) {
   if (state.rows[row][column] == null) {
     state.rows[row][column] = "box";
