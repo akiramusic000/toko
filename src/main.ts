@@ -140,7 +140,9 @@ globalThis.updateState = function () {
 
 globalThis.share = function () {
   let share = document.querySelector<HTMLParagraphElement>("#share")!;
-  let url = `${window.location.origin + window.location.pathname}?code=${code}`;
+  let params = `?code=${code}`;
+  let url = `${window.location.origin + window.location.pathname}${params}`;
   share.innerText = "URL copied to clipboard";
   navigator.clipboard.writeText(url);
+  window.history.replaceState({}, "", url.toString());
 };
