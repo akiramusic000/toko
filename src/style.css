@@ -1,0 +1,38 @@
+table {
+  border-collapse: collapse;
+  font-family: monospace;
+  cursor: default;
+}
+
+th, td {
+  aspect-ratio: 1 / 1 ;
+  border: 1px solid #ccc;
+  padding: 8px 12px;
+  text-align: left;
+}
+
+th {
+  border: 0px;
+}
+
+td.empty:hover {
+  background-color: #555555;
+}
+
+td.x:hover {
+  color: #999999;
+}
+
+td.box {
+  background-color: black;
+}
+
+th.empty {
+  background-color: white;
+  border: 0px;
+}
+
+.win {
+  font-family: sans-serif;
+  padding-left: 10px;
+}
