@@ -20,7 +20,7 @@ let columns = 5;
 let boxes = 10;
 let hints = 5;
 
-let game: Game = randomGame(5, 5, 10, 5)!;
+let game: Game = randomGame(rows, columns, boxes, hints)!;
 
 let state = new GameState(game);
 
