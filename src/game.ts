@@ -4,6 +4,193 @@ export type Game = {
   rows: (number | null)[][];
 };
 
+function random<T>(array: T[]): T {
+  let idx = Math.floor(Math.random() * array.length);
+  let value = array[idx];
+
+  let last = array[array.length - 1];
+  array[idx] = last;
+  array.pop();
+
+  return value;
+}
+
+export function randomGame(
+  rowCount: number,
+  columnCount: number,
+  boxes: number,
+  hints: number,
+): Game | null {
+  if (boxes + hints > rowCount * columnCount) {
+    return null;
+  }
+
+  let rowValues = Array(rowCount).fill(0);
+  let columnValues = Array(columnCount).fill(0);
+  let rows = Array(rowCount)
+    .fill(null)
+    .map(() => Array(columnCount).fill(null));
+
+  let empties: [number, number][] = [];
+
+  for (let rowIdx = 0; rowIdx < rowCount; rowIdx++) {
+    for (let columnIdx = 0; columnIdx < columnCount; columnIdx++) {
+      empties.push([rowIdx, columnIdx]);
+    }
+  }
+
+  console.log(empties);
+
+  for (let boxIdx = 0; boxIdx < boxes; boxIdx++) {
+    let [row, column] = random(empties);
+
+    rows[row][column] = "box";
+  }
+
+  for (let hintIdx = 0; hintIdx < hints; hintIdx++) {
+    let [row, column] = random(empties);
+
+    rows[row][column] = countNeighbors(rows, "box", row, column);
+  }
+
+  for (let rowIdx = 0; rowIdx < rowCount; rowIdx++) {
+    let count = 0;
+    for (let columnIdx = 0; columnIdx < columnCount; columnIdx++) {
+      if (rows[rowIdx][columnIdx] == "box") {
+        count += 1;
+      }
+    }
+
+    rowValues[rowIdx] = count;
+  }
+
+  for (let columnIdx = 0; columnIdx < columnCount; columnIdx++) {
+    let count = 0;
+    for (let rowIdx = 0; rowIdx < rowCount; rowIdx++) {
+      if (rows[rowIdx][columnIdx] == "box") {
+        count += 1;
+      }
+    }
+
+    columnValues[columnIdx] = count;
+  }
+
+  for (let rowIdx = 0; rowIdx < rowCount; rowIdx++) {
+    for (let columnIdx = 0; columnIdx < columnCount; columnIdx++) {
+      if (rows[rowIdx][columnIdx] == "box") {
+        rows[rowIdx][columnIdx] = null;
+      }
+    }
+  }
+
+  return {
+    columnValues: columnValues,
+    rowValues: rowValues,
+    rows: rows,
+  };
+}
+
+function countNeighbors<T>(
+  rows: T[][],
+  value: T,
+  row: number,
+  column: number,
+): number {
+  function getCellCount(row: number, column: number): number {
+    if (rows.length <= row || row < 0) {
+      return 0;
+    } else if (rows[row].length <= column || column < 0) {
+      return 0;
+    } else if (rows[row][column] == value) {
+      return 1;
+    } else {
+      return 0;
+    }
+  }
+
+  let count = 0;
+  count += getCellCount(row - 1, column - 1);
+  count += getCellCount(row + 0, column - 1);
+  count += getCellCount(row + 1, column - 1);
+  count += getCellCount(row - 1, column + 0);
+  count += getCellCount(row + 1, column + 0);
+  count += getCellCount(row - 1, column + 1);
+  count += getCellCount(row + 0, column + 1);
+  count += getCellCount(row + 1, column + 1);
+
+  return count;
+}
+
+export function exportGame(game: Game): string {
+  let rowCount = game.rowValues.length;
+  let columnCount = game.columnValues.length;
+
+  let values = "";
+  for (const value of game.columnValues) {
+    values += `,${value}`;
+  }
+  for (const value of game.rowValues) {
+    values += `,${value}`;
+  }
+
+  let rows = "";
+
+  for (const row of game.rows) {
+    for (const value of row) {
+      if (value == null) {
+        rows += "-";
+      } else {
+        rows += value;
+      }
+    }
+  }
+
+  return `${rowCount},${columnCount}${values},${rows}`;
+}
+
+export function importGame(gameString: string): Game {
+  let array = gameString.split(",");
+  let rowCount = Number.parseInt(array[0]);
+  let columnCount = Number.parseInt(array[1]);
+
+  let rowValues = [];
+  let columnValues = [];
+
+  for (let columnIdx = 0; columnIdx < columnCount; columnIdx++) {
+    columnValues.push(Number.parseInt(array[columnIdx + 2]));
+  }
+
+  for (let rowIdx = 0; rowIdx < rowCount; rowIdx++) {
+    rowValues.push(Number.parseInt(array[rowIdx + columnCount + 2]));
+  }
+
+  let rowsString = array[columnCount + rowCount + 2];
+  console.log(rowsString);
+
+  let rows = [];
+
+  for (let rowIdx = 0; rowIdx < rowCount; rowIdx++) {
+    let row = [];
+
+    for (let columnIdx = 0; columnIdx < columnCount; columnIdx++) {
+      let c = rowsString[rowIdx * columnCount + columnIdx];
+      if (c == "-") {
+        row.push(null);
+      } else {
+        row.push(Number.parseInt(c));
+      }
+    }
+
+    rows.push(row);
+  }
+
+  return {
+    columnValues: columnValues,
+    rowValues: rowValues,
+    rows: rows,
+  };
+}
+
 export class GameState {
   game: Game;
   columnValues: number[];
