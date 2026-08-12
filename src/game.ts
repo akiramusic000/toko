@@ -359,6 +359,7 @@ export class GameState {
         } else if (value == "X") {
           out += `<td class="x", ${click}>X</td>`;
         } else if (value == null) {
+          this.game.rows[rowIdx][columnIdx] = null;
           out += `<td class="empty", ${click}></td>`;
         }
       }
