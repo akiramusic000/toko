@@ -21,20 +21,25 @@ let boxes = 10;
 let hints = 5;
 
 const urlParams = new URLSearchParams(window.location.search);
-const parameterValue = urlParams.get("code");
+const codeValue = urlParams.get("code");
+const stateValue = urlParams.get("state");
 
 let game: Game;
 let state: GameState;
 let code: string;
 
-if (parameterValue == null) {
+if (codeValue != null) {
+  code = codeValue;
+  game = importGame(code);
+  state = new GameState(game);
+} else if (stateValue != null) {
+  state = GameState.import(stateValue);
+  game = state.game;
+  code = exportGame(game);
+} else {
   game = randomGame(rows, columns, boxes, hints)!;
   state = new GameState(game);
   code = exportGame(game);
-} else {
-  code = parameterValue;
-  game = importGame(code);
-  state = new GameState(game);
 }
 
 function render() {
@@ -57,8 +62,11 @@ function render() {
       <label for="code">Puzzle Code</label>
       <input type="text" name="code" size=50px id="codeIn", value="${code}", onchange="updateState()"></input>
     <br/>
-      <button onclick="share()">Share Puzzle</button>
-      <span id="share"></span>
+      <button onclick="sharePuzzle()">Share Puzzle</button>
+      <span id="sharePuzzle"></span>
+    <br/>
+      <button onclick="shareState()">Share Solution</button>
+      <span id="shareState"></span>
     <br/>
       <button onclick="reset()">Reset</button>
       ${state.render()}${win}
@@ -86,7 +94,8 @@ declare global {
   var reset: () => void;
   var generateRandom: () => void;
   var updateState: () => void;
-  var share: () => void;
+  var sharePuzzle: () => void;
+  var shareState: () => void;
 }
 
 globalThis.clickBox = function (row: number, column: number) {
@@ -138,9 +147,18 @@ globalThis.updateState = function () {
   code = document.querySelector<HTMLInputElement>("#codeIn")!.value;
 };
 
-globalThis.share = function () {
-  let share = document.querySelector<HTMLParagraphElement>("#share")!;
+globalThis.sharePuzzle = function () {
+  let share = document.querySelector<HTMLParagraphElement>("#sharePuzzle")!;
   let params = `?code=${code}`;
+  let url = `${window.location.origin + window.location.pathname}${params}`;
+  share.innerText = "URL copied to clipboard";
+  navigator.clipboard.writeText(url);
+  window.history.replaceState({}, "", url.toString());
+};
+
+globalThis.shareState = function () {
+  let share = document.querySelector<HTMLParagraphElement>("#shareState")!;
+  let params = `?state=${state.export()}`;
   let url = `${window.location.origin + window.location.pathname}${params}`;
   share.innerText = "URL copied to clipboard";
   navigator.clipboard.writeText(url);

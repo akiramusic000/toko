@@ -322,4 +322,95 @@ export class GameState {
       column >= 0
     );
   }
+
+  export(): string {
+    let rowCount = this.rowValues.length;
+    let columnCount = this.columnValues.length;
+
+    let values = "";
+    for (const value of this.columnValues) {
+      values += `,${value}`;
+    }
+    for (const value of this.rowValues) {
+      values += `,${value}`;
+    }
+
+    let rows = "";
+
+    for (const row of this.rows) {
+      for (const value of row) {
+        if (value == null) {
+          rows += "-";
+        } else if (value == "X") {
+          rows += "x";
+        } else if (value == "box") {
+          rows += "+";
+        } else {
+          rows += value;
+        }
+      }
+    }
+
+    return `${rowCount},${columnCount}${values},${rows}`;
+  }
+
+  static import(string: string): GameState {
+    let array = string.split(",");
+    let rowCount = Number.parseInt(array[0]);
+    let columnCount = Number.parseInt(array[1]);
+
+    let rowValues = [];
+    let columnValues = [];
+
+    for (let columnIdx = 0; columnIdx < columnCount; columnIdx++) {
+      columnValues.push(Number.parseInt(array[columnIdx + 2]));
+    }
+
+    for (let rowIdx = 0; rowIdx < rowCount; rowIdx++) {
+      rowValues.push(Number.parseInt(array[rowIdx + columnCount + 2]));
+    }
+
+    let rowsString = array[columnCount + rowCount + 2];
+    console.log(rowsString);
+
+    let rows = [];
+    let gameRows = [];
+
+    for (let rowIdx = 0; rowIdx < rowCount; rowIdx++) {
+      let row = [];
+      let gameRow = [];
+
+      for (let columnIdx = 0; columnIdx < columnCount; columnIdx++) {
+        let c = rowsString[rowIdx * columnCount + columnIdx];
+        if (c == "-") {
+          row.push(null);
+          gameRow.push(null);
+        } else if (c == "x") {
+          row.push("X");
+          gameRow.push(null);
+        } else if (c == " ") {
+          // Would be a plus, but pluses in URLs become spaces when parsed
+
+          row.push("box");
+          gameRow.push(null);
+        } else {
+          console.log("number?", c.codePointAt(0));
+          row.push(Number.parseInt(c));
+          gameRow.push(Number.parseInt(c));
+        }
+      }
+
+      rows.push(row);
+      gameRows.push(gameRow);
+    }
+
+    let gameState = new GameState({
+      columnValues: columnValues,
+      rowValues: rowValues,
+      rows: gameRows,
+    });
+    gameState.rows = rows as (number | null | "X" | "box")[][];
+
+    return gameState;
+  }
 }
