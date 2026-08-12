@@ -111,102 +111,15 @@ export class Game {
   solve(): GameState[] | null {
     let state = new GameState(this);
 
-    function fillRow(row: number, value: "X" | "box" | null) {
-      for (let columnIdx = 0; columnIdx < state.rows[row].length; columnIdx++) {
-        if (state.rows[row][columnIdx] == null) {
-          state.rows[row][columnIdx] = value;
-        }
-      }
-    }
-    function fillColumn(column: number, value: "X" | "box" | null) {
-      for (let rowIdx = 0; rowIdx < state.rows.length; rowIdx++) {
-        if (state.rows[rowIdx][column] == null) {
-          state.rows[rowIdx][column] = value;
-        }
-      }
-    }
+    return state.solveWithBacktrack(0, 50, new Set());
+  }
 
-    function fillNeighbors(
-      row: number,
-      column: number,
-      value: "X" | "box" | null,
-    ) {
-      function set(row: number, column: number, value: "X" | "box" | null) {
-        if (
-          row >= state.rows.length ||
-          row < 0 ||
-          column >= state.rows[row].length ||
-          column < 0
-        ) {
-          return;
-        }
+  solveNoBacktrack(): GameState | null {
+    let state = new GameState(this);
 
-        if (state.rows[row][column] == null) {
-          state.rows[row][column] = value;
-        }
-      }
+    state.solveNoBacktrack();
 
-      set(row - 1, column - 1, value);
-      set(row - 1, column + 0, value);
-      set(row - 1, column + 1, value);
-      set(row + 0, column - 1, value);
-      set(row + 0, column + 1, value);
-      set(row + 1, column - 1, value);
-      set(row + 1, column + 0, value);
-      set(row + 1, column + 1, value);
-    }
-
-    let last = JSON.stringify(state);
-
-    while (true) {
-      for (let [rowIdx, rowValue] of state.rowValues.entries()) {
-        if (rowValue == countRowBox(state.rows, rowIdx)) {
-          fillRow(rowIdx, "X");
-        } else if (
-          rowValue ==
-          state.columnValues.length - countRowX(state.rows, rowIdx)
-        ) {
-          fillRow(rowIdx, "box");
-        }
-      }
-
-      for (let [columnIdx, columnValue] of state.columnValues.entries()) {
-        if (columnValue == countColumnBox(state.rows, columnIdx)) {
-          fillColumn(columnIdx, "X");
-        } else if (
-          columnValue ==
-          state.rowValues.length - countColumnX(state.rows, columnIdx)
-        ) {
-          fillColumn(columnIdx, "box");
-        }
-      }
-
-      for (let [rowIdx, _rowValue] of state.rowValues.entries()) {
-        for (let [columnIdx, _columnValue] of state.columnValues.entries()) {
-          let value = state.rows[rowIdx][columnIdx];
-          if (typeof value == "number") {
-            if (countNeighborsBox(state.rows, rowIdx, columnIdx) == value) {
-              fillNeighbors(rowIdx, columnIdx, "X");
-              console.log(`fill ${rowIdx} ${columnIdx}`);
-            } else if (
-              value ==
-              countNeighborsEmpty(state.rows, rowIdx, columnIdx) +
-                countNeighborsBox(state.rows, rowIdx, columnIdx)
-            ) {
-              fillNeighbors(rowIdx, columnIdx, "box");
-            }
-          }
-        }
-      }
-
-      if (last == JSON.stringify(state)) {
-        break;
-      } else {
-        last = JSON.stringify(state);
-      }
-    }
-
-    return [state];
+    return state;
   }
 }
 
@@ -856,5 +769,147 @@ export class GameState {
     state.rows = rows as ("box" | "X" | number | null)[][];
 
     return state;
+  }
+
+  clone(): GameState {
+    const copy = new GameState(Game.empty(0, 0));
+    Object.assign(copy, structuredClone(this));
+    return copy;
+  }
+
+  solveNoBacktrack() {
+    let state = this;
+
+    function fillRow(row: number, value: "X" | "box" | null) {
+      for (let columnIdx = 0; columnIdx < state.rows[row].length; columnIdx++) {
+        if (state.rows[row][columnIdx] == null) {
+          state.rows[row][columnIdx] = value;
+        }
+      }
+    }
+    function fillColumn(column: number, value: "X" | "box" | null) {
+      for (let rowIdx = 0; rowIdx < state.rows.length; rowIdx++) {
+        if (state.rows[rowIdx][column] == null) {
+          state.rows[rowIdx][column] = value;
+        }
+      }
+    }
+
+    function fillNeighbors(
+      row: number,
+      column: number,
+      value: "X" | "box" | null,
+    ) {
+      function set(row: number, column: number, value: "X" | "box" | null) {
+        if (
+          row >= state.rows.length ||
+          row < 0 ||
+          column >= state.rows[row].length ||
+          column < 0
+        ) {
+          return;
+        }
+
+        if (state.rows[row][column] == null) {
+          state.rows[row][column] = value;
+        }
+      }
+
+      set(row - 1, column - 1, value);
+      set(row - 1, column + 0, value);
+      set(row - 1, column + 1, value);
+      set(row + 0, column - 1, value);
+      set(row + 0, column + 1, value);
+      set(row + 1, column - 1, value);
+      set(row + 1, column + 0, value);
+      set(row + 1, column + 1, value);
+    }
+
+    let last = JSON.stringify(state);
+
+    while (true) {
+      for (let [rowIdx, rowValue] of state.rowValues.entries()) {
+        if (rowValue == countRowBox(state.rows, rowIdx)) {
+          fillRow(rowIdx, "X");
+        } else if (
+          rowValue ==
+          state.columnValues.length - countRowX(state.rows, rowIdx)
+        ) {
+          fillRow(rowIdx, "box");
+        }
+      }
+
+      for (let [columnIdx, columnValue] of state.columnValues.entries()) {
+        if (columnValue == countColumnBox(state.rows, columnIdx)) {
+          fillColumn(columnIdx, "X");
+        } else if (
+          columnValue ==
+          state.rowValues.length - countColumnX(state.rows, columnIdx)
+        ) {
+          fillColumn(columnIdx, "box");
+        }
+      }
+
+      for (let [rowIdx, _rowValue] of state.rowValues.entries()) {
+        for (let [columnIdx, _columnValue] of state.columnValues.entries()) {
+          let value = state.rows[rowIdx][columnIdx];
+          if (typeof value == "number") {
+            if (countNeighborsBox(state.rows, rowIdx, columnIdx) == value) {
+              fillNeighbors(rowIdx, columnIdx, "X");
+            } else if (
+              value ==
+              countNeighborsEmpty(state.rows, rowIdx, columnIdx) +
+                countNeighborsBox(state.rows, rowIdx, columnIdx)
+            ) {
+              fillNeighbors(rowIdx, columnIdx, "box");
+            }
+          }
+        }
+      }
+
+      if (last == JSON.stringify(state)) {
+        break;
+      } else {
+        last = JSON.stringify(state);
+      }
+    }
+  }
+
+  solveWithBacktrack(
+    count: number,
+    limit: number,
+    set: Set<string>,
+  ): GameState[] {
+    if (count > limit) {
+      return [];
+    }
+
+    let state: GameState = this.clone();
+
+    state.solveNoBacktrack();
+
+    if (state.completed()) {
+      return [state];
+    }
+
+    let solved: GameState[] = [];
+
+    for (const [rowIdx, row] of state.rows.entries()) {
+      for (const [columnIdx, value] of row.entries()) {
+        if (value == null) {
+          state.rows[rowIdx][columnIdx] = "box";
+          if (set.has(JSON.stringify(state))) {
+            continue;
+          }
+          set.add(JSON.stringify(state));
+          solved = solved.concat(
+            state.solveWithBacktrack(count + solved.length, limit, set),
+          );
+          state.rows[rowIdx][columnIdx] = null;
+        }
+      }
+    }
+
+    return solved;
   }
 }

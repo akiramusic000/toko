@@ -57,7 +57,9 @@ function renderPuzzle() {
     <br/>
       <button onclick="puzzleEditor()">Puzzle Editor (Will break current puzzle if not solved!)</button>
     <br/>
-      <button onclick="solve()">Solve</button>
+      <button onclick="solve()">Solve (With Backtracking)</button>
+    <br/>
+      <button onclick="solveNoBacktrack()">Solve (Without Backtracking)</button>
     <br/>
       <button onclick="reset()">Reset</button>
     <br/>
@@ -124,6 +126,7 @@ declare global {
   var puzzleEditor: () => void;
   var puzzleViewer: () => void;
   var solve: () => void;
+  var solveNoBacktrack: () => void;
 }
 
 globalThis.clickBox = function (row: number, column: number) {
@@ -253,9 +256,20 @@ globalThis.solve = function () {
   if (states == null) {
     alert("Failed to solve!");
   } else {
+    state = states[0].clone();
+    renderPuzzle();
+
     for (const state of states) {
       document.querySelector<HTMLDivElement>("#app")!.innerHTML +=
         state.render();
     }
   }
+};
+
+globalThis.solveNoBacktrack = function () {
+  renderPuzzle();
+
+  state.solveNoBacktrack();
+
+  renderPuzzle();
 };
