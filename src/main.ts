@@ -1,19 +1,5 @@
 import "./style.css";
-import type { Game } from "./game";
-import { exportGame, GameState, importGame, randomGame } from "./game";
-
-/*let game: Game = {
-  columnValues: [5, 1, 5, 0, 4, 0],
-  rowValues: [3, 2, 4, 3, 3, 0],
-  rows: [
-    [null, null, null, null, null, null],
-    [null, null, null, null, null, null],
-    [null, null, null, 5, null, null],
-    [null, null, null, null, null, null],
-    [null, null, null, null, null, null],
-    [null, 2, null, null, null, null],
-  ],
-};*/
+import { Game, GameState } from "./game";
 
 let rows = 5;
 let columns = 5;
@@ -30,16 +16,16 @@ let code: string;
 
 if (codeValue != null) {
   code = codeValue;
-  game = importGame(code);
+  game = Game.import(code);
   state = new GameState(game);
 } else if (stateValue != null) {
   state = GameState.import(stateValue);
   game = state.game;
-  code = exportGame(game);
+  code = game.export();
 } else {
-  game = randomGame(rows, columns, boxes, hints)!;
+  game = Game.random(rows, columns, boxes, hints)!;
   state = new GameState(game);
-  code = exportGame(game);
+  code = game.export();
 }
 
 function render() {
@@ -79,7 +65,7 @@ function render() {
       ev.preventDefault();
 
       code = codeIn.value;
-      game = importGame(code);
+      game = Game.import(code);
       state = new GameState(game);
       render();
     }
@@ -123,11 +109,11 @@ globalThis.reset = function () {
 };
 
 globalThis.generateRandom = function () {
-  game = randomGame(rows, columns, boxes, hints)!;
+  game = Game.random(rows, columns, boxes, hints)!;
   state = new GameState(game);
   render();
 
-  code = exportGame(game);
+  code = game.export();
   document.querySelector<HTMLInputElement>("#codeIn")!.value = code;
 };
 
