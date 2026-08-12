@@ -70,6 +70,10 @@ function render() {
       render();
     }
   });
+
+  let params = `?state=${state.export()}?code=${code}`;
+  let url = `${window.location.origin + window.location.pathname}${params}`;
+  window.history.replaceState({}, "", url.toString());
 }
 
 render();
@@ -148,5 +152,4 @@ globalThis.shareState = function () {
   let url = `${window.location.origin + window.location.pathname}${params}`;
   share.innerText = "URL copied to clipboard";
   navigator.clipboard.writeText(url);
-  window.history.replaceState({}, "", url.toString());
 };
