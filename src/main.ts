@@ -252,11 +252,13 @@ globalThis.puzzleViewer = function () {
 globalThis.solve = function () {
   renderPuzzle();
 
+  console.log(state);
+
   let states = state.game.solve();
   if (states == null) {
     alert("Failed to solve!");
   } else {
-    state = states[0].clone();
+    state = states[0];
     renderPuzzle();
 
     for (const state of states) {

@@ -108,6 +108,12 @@ export class Game {
     return new Game(columnValues, rowValues, rows);
   }
 
+  clone(): Game {
+    const copy = Game.empty(0, 0);
+    Object.assign(copy, structuredClone(this));
+    return copy;
+  }
+
   solve(): GameState[] | null {
     let state = new GameState(this);
 
@@ -774,6 +780,7 @@ export class GameState {
   clone(): GameState {
     const copy = new GameState(Game.empty(0, 0));
     Object.assign(copy, structuredClone(this));
+    copy.game = this.game.clone();
     return copy;
   }
 
