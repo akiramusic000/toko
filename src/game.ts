@@ -19,67 +19,25 @@ export class Game {
     boxes: number,
     hints: number,
   ): Game | null {
-    if (boxes + hints > rowCount * columnCount) {
+    let game = GameState.randomSolved(
+      rowCount,
+      columnCount,
+      boxes,
+      hints,
+    )?.game;
+    if (game == undefined) {
       return null;
+    } else {
+      return game;
     }
+  }
 
+  static empty(rowCount: number, columnCount: number): Game {
     let rowValues = Array(rowCount).fill(0);
     let columnValues = Array(columnCount).fill(0);
     let rows = Array(rowCount)
       .fill(null)
       .map(() => Array(columnCount).fill(null));
-
-    let empties: [number, number][] = [];
-
-    for (let rowIdx = 0; rowIdx < rowCount; rowIdx++) {
-      for (let columnIdx = 0; columnIdx < columnCount; columnIdx++) {
-        empties.push([rowIdx, columnIdx]);
-      }
-    }
-
-    console.log(empties);
-
-    for (let boxIdx = 0; boxIdx < boxes; boxIdx++) {
-      let [row, column] = random(empties);
-
-      rows[row][column] = "box";
-    }
-
-    for (let hintIdx = 0; hintIdx < hints; hintIdx++) {
-      let [row, column] = random(empties);
-
-      rows[row][column] = countNeighbors(rows, "box", row, column);
-    }
-
-    for (let rowIdx = 0; rowIdx < rowCount; rowIdx++) {
-      let count = 0;
-      for (let columnIdx = 0; columnIdx < columnCount; columnIdx++) {
-        if (rows[rowIdx][columnIdx] == "box") {
-          count += 1;
-        }
-      }
-
-      rowValues[rowIdx] = count;
-    }
-
-    for (let columnIdx = 0; columnIdx < columnCount; columnIdx++) {
-      let count = 0;
-      for (let rowIdx = 0; rowIdx < rowCount; rowIdx++) {
-        if (rows[rowIdx][columnIdx] == "box") {
-          count += 1;
-        }
-      }
-
-      columnValues[columnIdx] = count;
-    }
-
-    for (let rowIdx = 0; rowIdx < rowCount; rowIdx++) {
-      for (let columnIdx = 0; columnIdx < columnCount; columnIdx++) {
-        if (rows[rowIdx][columnIdx] == "box") {
-          rows[rowIdx][columnIdx] = null;
-        }
-      }
-    }
 
     return new Game(columnValues, rowValues, rows);
   }
@@ -193,6 +151,42 @@ function countNeighbors<T>(
   return count;
 }
 
+function findRowValues<T>(rows: T[][], value: T): number[] {
+  let out = [];
+
+  for (let rowIdx = 0; rowIdx < rows.length; rowIdx++) {
+    let count = 0;
+
+    for (let columnIdx = 0; columnIdx < rows[rowIdx].length; columnIdx++) {
+      if (rows[rowIdx][columnIdx] == value) {
+        count += 1;
+      }
+    }
+
+    out.push(count);
+  }
+
+  return out;
+}
+
+function findColumnValues<T>(rows: T[][], value: T): number[] {
+  let out = [];
+
+  for (let columnIdx = 0; columnIdx < rows[0].length; columnIdx++) {
+    let count = 0;
+
+    for (let rowIdx = 0; rowIdx < rows.length; rowIdx++) {
+      if (rows[rowIdx][columnIdx] == value) {
+        count += 1;
+      }
+    }
+
+    out.push(count);
+  }
+
+  return out;
+}
+
 export class GameState {
   game: Game;
   columnValues: number[];
@@ -208,6 +202,21 @@ export class GameState {
 
   reset() {
     this.rows = JSON.parse(JSON.stringify(this.game.rows));
+  }
+
+  removeX() {
+    for (const [rowIdx, row] of this.rows.entries()) {
+      for (const [columnIdx, val] of row.entries()) {
+        if (val == "X") {
+          this.rows[rowIdx][columnIdx] = null;
+        }
+      }
+    }
+  }
+
+  resetPuzzleEditor() {
+    this.game = Game.empty(this.rowValues.length, this.columnValues.length);
+    this.reset();
   }
 
   render(): string {
@@ -228,6 +237,125 @@ export class GameState {
           out += `<td>${value}</td>`;
         } else if (value == "box") {
           out += `<td class="box", ${click}"></td>`;
+        } else if (value == "X") {
+          out += `<td class="x", ${click}>X</td>`;
+        } else if (value == null) {
+          out += `<td class="empty", ${click}></td>`;
+        }
+      }
+      out += `</tr>`;
+    }
+
+    out += "</tbody></table>";
+
+    return out;
+  }
+
+  static randomSolved(
+    rowCount: number,
+    columnCount: number,
+    boxes: number,
+    hints: number,
+  ): GameState | null {
+    if (boxes + hints > rowCount * columnCount) {
+      return null;
+    }
+
+    let rowValues = Array(rowCount).fill(0);
+    let columnValues = Array(columnCount).fill(0);
+    let rows = Array(rowCount)
+      .fill(null)
+      .map(() => Array(columnCount).fill(null));
+
+    let empties: [number, number][] = [];
+
+    for (let rowIdx = 0; rowIdx < rowCount; rowIdx++) {
+      for (let columnIdx = 0; columnIdx < columnCount; columnIdx++) {
+        empties.push([rowIdx, columnIdx]);
+      }
+    }
+
+    console.log(empties);
+
+    for (let boxIdx = 0; boxIdx < boxes; boxIdx++) {
+      let [row, column] = random(empties);
+
+      rows[row][column] = "box";
+    }
+
+    for (let hintIdx = 0; hintIdx < hints; hintIdx++) {
+      let [row, column] = random(empties);
+
+      rows[row][column] = countNeighbors(rows, "box", row, column);
+    }
+
+    for (let rowIdx = 0; rowIdx < rowCount; rowIdx++) {
+      let count = 0;
+      for (let columnIdx = 0; columnIdx < columnCount; columnIdx++) {
+        if (rows[rowIdx][columnIdx] == "box") {
+          count += 1;
+        }
+      }
+
+      rowValues[rowIdx] = count;
+    }
+
+    for (let columnIdx = 0; columnIdx < columnCount; columnIdx++) {
+      let count = 0;
+      for (let rowIdx = 0; rowIdx < rowCount; rowIdx++) {
+        if (rows[rowIdx][columnIdx] == "box") {
+          count += 1;
+        }
+      }
+
+      columnValues[columnIdx] = count;
+    }
+
+    let gameRows = [];
+
+    for (let rowIdx = 0; rowIdx < rowCount; rowIdx++) {
+      let gameRow = [];
+
+      for (let columnIdx = 0; columnIdx < columnCount; columnIdx++) {
+        if (rows[rowIdx][columnIdx] == "box") {
+          gameRow.push(null);
+        } else {
+          gameRow.push(rows[rowIdx][columnIdx]);
+        }
+      }
+
+      gameRows.push(gameRow);
+    }
+
+    let state = new GameState(new Game(columnValues, rowValues, gameRows));
+    state.rows = rows;
+    return state;
+  }
+
+  renderPuzzleEditor(): string {
+    this.rowValues = findRowValues(this.rows, "box");
+    this.columnValues = findColumnValues(this.rows, "box");
+
+    let out = '<table><thead><tr><th class = "empty"></th>';
+
+    for (const i of this.columnValues) {
+      out += `<th scope="col">${i}</th>`;
+    }
+
+    out += "</tr></thead><tbody>";
+
+    for (const [rowIdx, row] of this.rows.entries()) {
+      out += `<tr><th scope="row">${this.rowValues[rowIdx]}</th>`;
+      for (var [columnIdx, value] of row.entries()) {
+        const click = `onclick="clickBox(${rowIdx}, ${columnIdx})", oncontextmenu="markBox(${rowIdx}, ${columnIdx}); return false;"`;
+
+        if (typeof value == "number") {
+          value = countNeighbors(this.rows, (value = "box"), rowIdx, columnIdx);
+          this.rows[rowIdx][columnIdx] = value;
+          this.game.rows[rowIdx][columnIdx] = value;
+          out += `<td ${click}>${value}</td>`;
+        } else if (value == "box") {
+          out += `<td class="box", ${click}></td>`;
         } else if (value == "X") {
           out += `<td class="x", ${click}>X</td>`;
         } else if (value == null) {
@@ -383,5 +511,87 @@ export class GameState {
     gameState.rows = rows as (number | null | "X" | "box")[][];
 
     return gameState;
+  }
+
+  exportPuzzleEditor(): string {
+    let rowCount = this.rowValues.length;
+    let columnCount = this.columnValues.length;
+
+    let code = "";
+
+    for (const row of this.rows) {
+      for (const value of row) {
+        if (value == "box") {
+          code += "+";
+        } else if (value == null) {
+          code += "-";
+        } else {
+          code += "x";
+        }
+      }
+    }
+
+    return `${rowCount},${columnCount},${code}`;
+  }
+
+  static importPuzzleEditor(code: string): GameState {
+    let array = code.split(",");
+    let rowCount = Number.parseInt(array[0]);
+    let columnCount = Number.parseInt(array[1]);
+    let rowsCode = array[2];
+
+    let rows = [];
+
+    for (let rowIdx = 0; rowIdx < rowCount; rowIdx++) {
+      let row = [];
+
+      for (let columnIdx = 0; columnIdx < columnCount; columnIdx++) {
+        let c = rowsCode[rowIdx * columnCount + columnIdx];
+        if (c == " ") {
+          row.push("box");
+        } else if (c == "-") {
+          row.push(null);
+        } else if (c == "x") {
+          row.push(0);
+        }
+      }
+
+      rows.push(row);
+    }
+
+    let gameRows = [];
+
+    for (let [rowIdx, row] of rows.entries()) {
+      let gameRow = [];
+
+      for (let [columnIdx, value] of row.entries()) {
+        if (value == 0) {
+          rows[rowIdx][columnIdx] = countNeighbors(
+            rows,
+            "box",
+            rowIdx,
+            columnIdx,
+          );
+        }
+
+        if (value != "box") {
+          gameRow.push(value);
+        } else {
+          gameRow.push(null);
+        }
+      }
+
+      gameRows.push(gameRow);
+    }
+
+    let rowValues = findRowValues(rows, "box");
+    let columnValues = findColumnValues(rows, "box");
+
+    let state = new GameState(
+      new Game(columnValues, rowValues, gameRows as (number | null)[][]),
+    );
+    state.rows = rows as ("box" | "X" | number | null)[][];
+
+    return state;
   }
 }

@@ -9,26 +9,27 @@ let hints = 5;
 const urlParams = new URLSearchParams(window.location.search);
 const codeValue = urlParams.get("code");
 const stateValue = urlParams.get("state");
+const puzzleValue = urlParams.get("puzzle");
 
-let game: Game;
 let state: GameState;
 let code: string;
+let puzzleEditor = false;
 
-if (codeValue != null) {
-  code = codeValue;
-  game = Game.import(code);
-  state = new GameState(game);
+if (puzzleValue != null) {
+  state = GameState.importPuzzleEditor(puzzleValue);
+  puzzleEditor = true;
 } else if (stateValue != null) {
   state = GameState.import(stateValue);
-  game = state.game;
-  code = game.export();
+  code = state.game.export();
+} else if (codeValue != null) {
+  code = codeValue;
+  state = new GameState(Game.import(code));
 } else {
-  game = Game.random(rows, columns, boxes, hints)!;
-  state = new GameState(game);
-  code = game.export();
+  state = new GameState(Game.random(rows, columns, boxes, hints)!);
+  code = state.game.export();
 }
 
-function render() {
+function renderPuzzle() {
   let win = "";
   if (state.completed()) {
     win = '<p class="win">You win!</p>';
@@ -54,7 +55,10 @@ function render() {
       <button onclick="shareState()">Share Solution</button>
       <span id="shareState"></span>
     <br/>
+      <button onclick="puzzleEditor()">Puzzle Editor (Will break current puzzle if not solved!)</button>
+    <br/>
       <button onclick="reset()">Reset</button>
+    <br/>
       ${state.render()}${win}
     `;
 
@@ -65,9 +69,8 @@ function render() {
       ev.preventDefault();
 
       code = codeIn.value;
-      game = Game.import(code);
-      state = new GameState(game);
-      render();
+      state = new GameState(Game.import(code));
+      renderPuzzle();
     }
   });
 
@@ -76,48 +79,119 @@ function render() {
   window.history.replaceState({}, "", url.toString());
 }
 
-render();
+if (puzzleEditor) {
+  renderPuzzleEditor();
+} else {
+  renderPuzzle();
+}
+
+function renderPuzzleEditor() {
+  document.querySelector<HTMLDivElement>("#app")!.innerHTML = `
+    <label for="rows">Rows</label>
+      <input type="number" name="rows" size=1px id="rows", value="${rows}", onchange="updateState()"></input>
+      <label for="columns">Columns</label>
+      <input type="number" name="columns" size=1px id="columns", value="${columns}", onchange="updateState()"></input>
+      <label for="boxes">Boxes</label>
+      <input type="number" name="boxes" size=1px id="boxes", value="${boxes}", onchange="updateState()"></input>
+      <label for="hints">Hints</label>
+      <input type="number" name="hints" size=1px id="hints", value="${hints}", onchange="updateState()"></input>
+      <button onclick="generateRandomSolved()">Generate New Random</button>
+      <button onclick="generateEmpty()">Generate New Empty</button>
+    </br>
+      <button onclick="puzzleViewer()">Puzzle Viewer</button>
+    <br/>
+      <button onclick="reset()">Reset</button>
+    ${state.renderPuzzleEditor()}
+  `;
+
+  let params = `?puzzle=${state.exportPuzzleEditor()}`;
+  let url = `${window.location.origin + window.location.pathname}${params}`;
+  window.history.replaceState({}, "", url.toString());
+}
 
 declare global {
   var clickBox: (row: number, column: number) => void;
   var markBox: (row: number, column: number) => void;
   var reset: () => void;
   var generateRandom: () => void;
+  var generateRandomSolved: () => void;
+  var generateEmpty: () => void;
   var updateState: () => void;
   var sharePuzzle: () => void;
   var shareState: () => void;
+  var puzzleEditor: () => void;
+  var puzzleViewer: () => void;
 }
 
 globalThis.clickBox = function (row: number, column: number) {
-  if (state.rows[row][column] == null) {
-    state.rows[row][column] = "box";
-  } else if (state.rows[row][column] == "box") {
-    state.rows[row][column] = null;
+  if (puzzleEditor) {
+    if (state.rows[row][column] == null) {
+      state.rows[row][column] = "box";
+    } else {
+      state.rows[row][column] = null;
+    }
+
+    renderPuzzleEditor();
+  } else {
+    if (state.rows[row][column] == null) {
+      state.rows[row][column] = "box";
+    } else if (state.rows[row][column] == "box") {
+      state.rows[row][column] = null;
+    }
+    renderPuzzle();
   }
-  render();
 };
 
 globalThis.markBox = function (row: number, column: number) {
-  if (state.rows[row][column] == null || state.rows[row][column] == "box") {
-    state.rows[row][column] = "X";
-  } else if (state.rows[row][column] == "X") {
-    state.rows[row][column] = null;
+  if (puzzleEditor) {
+    if (state.rows[row][column] == null || state.rows[row][column] == "box") {
+      state.rows[row][column] = 0;
+    } else {
+      state.rows[row][column] = null;
+    }
+
+    renderPuzzleEditor();
+  } else {
+    if (state.rows[row][column] == null || state.rows[row][column] == "box") {
+      state.rows[row][column] = "X";
+    } else if (state.rows[row][column] == "X") {
+      state.rows[row][column] = null;
+    }
+    renderPuzzle();
   }
-  render();
 };
 
 globalThis.reset = function () {
-  state.reset();
-  render();
-  console.log("reset");
+  if (puzzleEditor) {
+    state.resetPuzzleEditor();
+    renderPuzzleEditor();
+  } else {
+    state.reset();
+    renderPuzzle();
+  }
 };
 
 globalThis.generateRandom = function () {
-  game = Game.random(rows, columns, boxes, hints)!;
-  state = new GameState(game);
-  render();
+  state = new GameState(Game.random(rows, columns, boxes, hints)!);
+  renderPuzzle();
 
-  code = game.export();
+  code = state.game.export();
+  document.querySelector<HTMLInputElement>("#codeIn")!.value = code;
+};
+
+globalThis.generateRandomSolved = function () {
+  state = GameState.randomSolved(rows, columns, boxes, hints)!;
+  renderPuzzleEditor();
+
+  code = state.game.export();
+  document.querySelector<HTMLInputElement>("#codeIn")!.value = code;
+};
+
+globalThis.generateEmpty = function () {
+  state = new GameState(Game.empty(rows, columns)!);
+  renderPuzzleEditor();
+
+  code = state.game.export();
   document.querySelector<HTMLInputElement>("#codeIn")!.value = code;
 };
 
@@ -152,4 +226,19 @@ globalThis.shareState = function () {
   let url = `${window.location.origin + window.location.pathname}${params}`;
   share.innerText = "URL copied to clipboard";
   navigator.clipboard.writeText(url);
+};
+
+globalThis.puzzleEditor = function () {
+  puzzleEditor = true;
+
+  state.removeX();
+
+  renderPuzzleEditor();
+};
+
+globalThis.puzzleViewer = function () {
+  puzzleEditor = false;
+  code = state.game.export();
+
+  renderPuzzle();
 };
