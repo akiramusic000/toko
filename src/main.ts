@@ -57,6 +57,8 @@ function renderPuzzle() {
     <br/>
       <button onclick="puzzleEditor()">Puzzle Editor (Will break current puzzle if not solved!)</button>
     <br/>
+      <button onclick="solve()">Solve</button>
+    <br/>
       <button onclick="reset()">Reset</button>
     <br/>
       ${state.render()}${win}
@@ -121,6 +123,7 @@ declare global {
   var shareState: () => void;
   var puzzleEditor: () => void;
   var puzzleViewer: () => void;
+  var solve: () => void;
 }
 
 globalThis.clickBox = function (row: number, column: number) {
@@ -241,4 +244,18 @@ globalThis.puzzleViewer = function () {
   code = state.game.export();
 
   renderPuzzle();
+};
+
+globalThis.solve = function () {
+  renderPuzzle();
+
+  let states = state.game.solve();
+  if (states == null) {
+    alert("Failed to solve!");
+  } else {
+    for (const state of states) {
+      document.querySelector<HTMLDivElement>("#app")!.innerHTML +=
+        state.render();
+    }
+  }
 };

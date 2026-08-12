@@ -107,6 +107,107 @@ export class Game {
 
     return new Game(columnValues, rowValues, rows);
   }
+
+  solve(): GameState[] | null {
+    let state = new GameState(this);
+
+    function fillRow(row: number, value: "X" | "box" | null) {
+      for (let columnIdx = 0; columnIdx < state.rows[row].length; columnIdx++) {
+        if (state.rows[row][columnIdx] == null) {
+          state.rows[row][columnIdx] = value;
+        }
+      }
+    }
+    function fillColumn(column: number, value: "X" | "box" | null) {
+      for (let rowIdx = 0; rowIdx < state.rows.length; rowIdx++) {
+        if (state.rows[rowIdx][column] == null) {
+          state.rows[rowIdx][column] = value;
+        }
+      }
+    }
+
+    function fillNeighbors(
+      row: number,
+      column: number,
+      value: "X" | "box" | null,
+    ) {
+      function set(row: number, column: number, value: "X" | "box" | null) {
+        if (
+          row >= state.rows.length ||
+          row < 0 ||
+          column >= state.rows[row].length ||
+          column < 0
+        ) {
+          return;
+        }
+
+        if (state.rows[row][column] == null) {
+          state.rows[row][column] = value;
+        }
+      }
+
+      set(row - 1, column - 1, value);
+      set(row - 1, column + 0, value);
+      set(row - 1, column + 1, value);
+      set(row + 0, column - 1, value);
+      set(row + 0, column + 1, value);
+      set(row + 1, column - 1, value);
+      set(row + 1, column + 0, value);
+      set(row + 1, column + 1, value);
+    }
+
+    let last = JSON.stringify(state);
+
+    while (true) {
+      for (let [rowIdx, rowValue] of state.rowValues.entries()) {
+        if (rowValue == countRowBox(state.rows, rowIdx)) {
+          fillRow(rowIdx, "X");
+        } else if (
+          rowValue ==
+          state.columnValues.length - countRowX(state.rows, rowIdx)
+        ) {
+          fillRow(rowIdx, "box");
+        }
+      }
+
+      for (let [columnIdx, columnValue] of state.columnValues.entries()) {
+        if (columnValue == countColumnBox(state.rows, columnIdx)) {
+          fillColumn(columnIdx, "X");
+        } else if (
+          columnValue ==
+          state.rowValues.length - countColumnX(state.rows, columnIdx)
+        ) {
+          fillColumn(columnIdx, "box");
+        }
+      }
+
+      for (let [rowIdx, _rowValue] of state.rowValues.entries()) {
+        for (let [columnIdx, _columnValue] of state.columnValues.entries()) {
+          let value = state.rows[rowIdx][columnIdx];
+          if (typeof value == "number") {
+            if (countNeighborsBox(state.rows, rowIdx, columnIdx) == value) {
+              fillNeighbors(rowIdx, columnIdx, "X");
+              console.log(`fill ${rowIdx} ${columnIdx}`);
+            } else if (
+              value ==
+              countNeighborsEmpty(state.rows, rowIdx, columnIdx) +
+                countNeighborsBox(state.rows, rowIdx, columnIdx)
+            ) {
+              fillNeighbors(rowIdx, columnIdx, "box");
+            }
+          }
+        }
+      }
+
+      if (last == JSON.stringify(state)) {
+        break;
+      } else {
+        last = JSON.stringify(state);
+      }
+    }
+
+    return [state];
+  }
 }
 
 function random<T>(array: T[]): T {
@@ -151,6 +252,99 @@ function countNeighbors<T>(
   return count;
 }
 
+function countNeighborsBox(
+  rows: ("box" | "X" | number | null)[][],
+  row: number,
+  column: number,
+): number {
+  function getCellCount(row: number, column: number): number {
+    if (rows.length <= row || row < 0) {
+      return 0;
+    } else if (rows[row].length <= column || column < 0) {
+      return 0;
+    } else if (rows[row][column] == "box") {
+      return 1;
+    } else {
+      return 0;
+    }
+  }
+
+  let count = 0;
+  count += getCellCount(row - 1, column - 1);
+  count += getCellCount(row + 0, column - 1);
+  count += getCellCount(row + 1, column - 1);
+  count += getCellCount(row - 1, column + 0);
+  count += getCellCount(row + 1, column + 0);
+  count += getCellCount(row - 1, column + 1);
+  count += getCellCount(row + 0, column + 1);
+  count += getCellCount(row + 1, column + 1);
+
+  return count;
+}
+
+function countNeighborsEmpty(
+  rows: ("box" | "X" | number | null)[][],
+  row: number,
+  column: number,
+): number {
+  function getCellCount(row: number, column: number): number {
+    if (rows.length <= row || row < 0) {
+      return 0;
+    } else if (rows[row].length <= column || column < 0) {
+      return 0;
+    } else if (rows[row][column] == null) {
+      return 1;
+    } else {
+      return 0;
+    }
+  }
+
+  let count = 0;
+  count += getCellCount(row - 1, column - 1);
+  count += getCellCount(row + 0, column - 1);
+  count += getCellCount(row + 1, column - 1);
+  count += getCellCount(row - 1, column + 0);
+  count += getCellCount(row + 1, column + 0);
+  count += getCellCount(row - 1, column + 1);
+  count += getCellCount(row + 0, column + 1);
+  count += getCellCount(row + 1, column + 1);
+
+  return count;
+}
+
+function countNeighborsX(
+  rows: ("box" | "X" | number | null)[][],
+  row: number,
+  column: number,
+): number {
+  function getCellCount(row: number, column: number): number {
+    if (rows.length <= row || row < 0) {
+      return 0;
+    } else if (rows[row].length <= column || column < 0) {
+      return 0;
+    } else if (
+      rows[row][column] == "X" ||
+      typeof rows[row][column] == "number"
+    ) {
+      return 1;
+    } else {
+      return 0;
+    }
+  }
+
+  let count = 0;
+  count += getCellCount(row - 1, column - 1);
+  count += getCellCount(row + 0, column - 1);
+  count += getCellCount(row + 1, column - 1);
+  count += getCellCount(row - 1, column + 0);
+  count += getCellCount(row + 1, column + 0);
+  count += getCellCount(row - 1, column + 1);
+  count += getCellCount(row + 0, column + 1);
+  count += getCellCount(row + 1, column + 1);
+
+  return count;
+}
+
 function findRowValues<T>(rows: T[][], value: T): number[] {
   let out = [];
 
@@ -169,6 +363,39 @@ function findRowValues<T>(rows: T[][], value: T): number[] {
   return out;
 }
 
+function countRowBox(
+  rows: (number | "box" | "X" | null)[][],
+  row: number,
+): number {
+  let count = 0;
+
+  for (let columnIdx = 0; columnIdx < rows[row].length; columnIdx++) {
+    if (rows[row][columnIdx] == "box") {
+      count += 1;
+    }
+  }
+
+  return count;
+}
+
+function countRowX(
+  rows: (number | "box" | "X" | null)[][],
+  row: number,
+): number {
+  let count = 0;
+
+  for (let columnIdx = 0; columnIdx < rows[row].length; columnIdx++) {
+    if (
+      rows[row][columnIdx] == "X" ||
+      typeof rows[row][columnIdx] == "number"
+    ) {
+      count += 1;
+    }
+  }
+
+  return count;
+}
+
 function findColumnValues<T>(rows: T[][], value: T): number[] {
   let out = [];
 
@@ -185,6 +412,39 @@ function findColumnValues<T>(rows: T[][], value: T): number[] {
   }
 
   return out;
+}
+
+function countColumnBox(
+  rows: ("box" | "X" | number | null)[][],
+  column: number,
+): number {
+  let count = 0;
+
+  for (let rowIdx = 0; rowIdx < rows.length; rowIdx++) {
+    if (rows[rowIdx][column] == "box") {
+      count += 1;
+    }
+  }
+
+  return count;
+}
+
+function countColumnX(
+  rows: ("box" | "X" | number | null)[][],
+  column: number,
+): number {
+  let count = 0;
+
+  for (let rowIdx = 0; rowIdx < rows.length; rowIdx++) {
+    if (
+      rows[rowIdx][column] == "X" ||
+      typeof rows[rowIdx][column] == "number"
+    ) {
+      count += 1;
+    }
+  }
+
+  return count;
 }
 
 export class GameState {
@@ -335,6 +595,8 @@ export class GameState {
   renderPuzzleEditor(): string {
     this.rowValues = findRowValues(this.rows, "box");
     this.columnValues = findColumnValues(this.rows, "box");
+    this.game.rowValues = this.rowValues;
+    this.game.columnValues = this.columnValues;
 
     let out = '<table><thead><tr><th class = "empty"></th>';
 
