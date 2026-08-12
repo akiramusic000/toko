@@ -231,7 +231,7 @@ function countNeighborsEmpty(
   return count;
 }
 
-function countNeighborsX(
+/*function countNeighborsX(
   rows: ("box" | "X" | number | null)[][],
   row: number,
   column: number,
@@ -262,7 +262,7 @@ function countNeighborsX(
   count += getCellCount(row + 1, column + 1);
 
   return count;
-}
+}*/
 
 function findRowValues<T>(rows: T[][], value: T): number[] {
   let out = [];
