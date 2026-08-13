@@ -122,7 +122,7 @@ export class Game {
   solve(): GameState[] | null {
     let state = new GameState(this);
 
-    return state.solveWithBacktrack(0, 50, new Set());
+    return state.solveWithBacktrack(0, 50, new Set(), new Set());
   }
 
   solveNoBacktrack(): GameState | null {
@@ -773,7 +773,8 @@ export class GameState {
   solveWithBacktrack(
     count: number,
     limit: number,
-    set: Set<string>,
+    solutionSet: Set<string>,
+    checkedSet: Set<string>,
   ): GameState[] {
     if (count > limit) {
       return [];
@@ -781,9 +782,16 @@ export class GameState {
 
     let state: GameState = this.clone();
 
+    if (checkedSet.has(JSON.stringify(state))) {
+      return [];
+    }
+
+    checkedSet.add(JSON.stringify(state));
+
     state.solveNoBacktrack();
 
-    if (state.completed()) {
+    if (state.completed() && !solutionSet.has(JSON.stringify(state))) {
+      solutionSet.add(JSON.stringify(state));
       return [state];
     }
 
@@ -793,12 +801,13 @@ export class GameState {
       for (const [columnIdx, value] of row.entries()) {
         if (value == null) {
           state.rows[rowIdx][columnIdx] = "box";
-          if (set.has(JSON.stringify(state))) {
-            continue;
-          }
-          set.add(JSON.stringify(state));
           solved = solved.concat(
-            state.solveWithBacktrack(count + solved.length, limit, set),
+            state.solveWithBacktrack(
+              count + solved.length,
+              limit,
+              solutionSet,
+              checkedSet,
+            ),
           );
           state.rows[rowIdx][columnIdx] = null;
         }
