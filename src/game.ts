@@ -212,6 +212,29 @@ function findColumnValues<T>(rows: T[][], value: T): number[] {
   return out;
 }
 
+function isDeepEqual(obj1: any, obj2: any): boolean {
+  if (obj1 === obj2) return true;
+  if (
+    typeof obj1 !== "object" ||
+    typeof obj2 !== "object" ||
+    obj1 === null ||
+    obj2 === null
+  ) {
+    return false;
+  }
+
+  const keys1 = Object.keys(obj1);
+  const keys2 = Object.keys(obj2);
+
+  if (keys1.length !== keys2.length) return false;
+
+  return keys1.every((key) => isDeepEqual(obj1[key], obj2[key]));
+}
+
+function includesByValue<T>(arr: T[], target: T): boolean {
+  return arr.some((item) => isDeepEqual(item, target));
+}
+
 export class GameState {
   game: Game;
   columnValues: number[];
@@ -733,8 +756,6 @@ export class GameState {
 
     let areas: Area[] = [];
 
-    let last = JSON.stringify(state);
-
     for (let [row, _value] of state.rowValues.entries()) {
       areas.push(rowArea(row));
     }
@@ -753,12 +774,62 @@ export class GameState {
 
     console.log(areas);
 
+    let last = JSON.stringify(state);
+
     while (true) {
       for (let area of areas) {
         if (area.allowed == countAreaBox(area)) {
           fillArea(area, "X");
         } else if (area.allowed == countAreaAll(area) - countAreaX(area)) {
           fillArea(area, "box");
+        }
+
+        for (let areaB of areas) {
+          let areaA = area;
+
+          if (areaA == areaB) {
+            continue;
+          }
+
+          if (
+            areaA.allowed == 1 &&
+            areaB.allowed == 3 &&
+            areaA.covered.some(
+              (subArr) => subArr[0] === 0 && subArr[1] === 0,
+            ) &&
+            areaB.covered.some(
+              (subArr) => subArr[0] === 0 && subArr[1] === 0,
+            ) &&
+            areaA.covered.some(
+              (subArr) => subArr[0] === 1 && subArr[1] === 0,
+            ) &&
+            areaB.covered.some((subArr) => subArr[0] === 1 && subArr[1] === 0)
+          ) {
+            console.log("possible");
+            console.log(areaA, areaB);
+
+            console.log(
+              areaB.covered.length - areaA.covered.length,
+              areaB.allowed - areaA.allowed,
+            );
+          }
+
+          if (
+            areaA.covered.every((value) =>
+              includesByValue(areaB.covered, value),
+            )
+          ) {
+            let difference: Area = {
+              covered: areaB.covered.filter(
+                (value) => !includesByValue(areaA.covered, value),
+              ),
+              allowed: areaB.allowed - areaA.allowed,
+            };
+
+            if (!includesByValue(areas, difference)) {
+              areas.push(difference);
+            }
+          }
         }
       }
 
