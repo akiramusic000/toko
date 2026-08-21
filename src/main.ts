@@ -218,7 +218,9 @@ globalThis.updateState = function () {
     document.querySelector<HTMLInputElement>("#hints")!.value,
   );
   code = document.querySelector<HTMLInputElement>("#codeIn")!.value;
-  limit = document.querySelector<HTMLInputElement>("#limit")!.value;
+  limit = Number.parseInt(
+    document.querySelector<HTMLInputElement>("#limit")!.value,
+  );
 };
 
 globalThis.sharePuzzle = function () {
@@ -258,7 +260,7 @@ globalThis.solve = function () {
 
   console.log(state);
 
-  let states = state.game.solve();
+  let states = state.game.solve(limit);
   if (states == null) {
     alert("Failed to solve!");
   } else {
