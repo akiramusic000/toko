@@ -5,6 +5,7 @@ let rows = 5;
 let columns = 5;
 let boxes = 10;
 let hints = 5;
+let limit = 50;
 
 const urlParams = new URLSearchParams(window.location.search);
 const codeValue = urlParams.get("code");
@@ -58,6 +59,8 @@ function renderPuzzle() {
       <button onclick="puzzleEditor()">Puzzle Editor (Will break current puzzle if not solved!)</button>
     <br/>
       <button onclick="solve()">Solve (With Backtracking)</button>
+      <label for="limit">Solution Limit</label>
+      <input type="number" name="limit" size=1px id="limit", value="${limit}", onchange="updateState()"></input>
     <br/>
       <button onclick="solveNoBacktrack()">Solve (Without Backtracking)</button>
     <br/>
@@ -215,6 +218,7 @@ globalThis.updateState = function () {
     document.querySelector<HTMLInputElement>("#hints")!.value,
   );
   code = document.querySelector<HTMLInputElement>("#codeIn")!.value;
+  limit = document.querySelector<HTMLInputElement>("#limit")!.value;
 };
 
 globalThis.sharePuzzle = function () {

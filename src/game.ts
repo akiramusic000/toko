@@ -119,10 +119,10 @@ export class Game {
     return copy;
   }
 
-  solve(): GameState[] | null {
+  solve(limit: number): GameState[] | null {
     let state = new GameState(this);
 
-    return state.solveWithBacktrack(0, 50, new Set(), new Set());
+    return state.solveWithBacktrack(0, limit, new Set(), new Set());
   }
 
   solveNoBacktrack(): GameState | null {
